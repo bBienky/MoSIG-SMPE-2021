@@ -1,0 +1,88 @@
+---
+title: "tp-batman"
+author: "Simon Biend"
+date: "09/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(corrplot)
+```
+
+## R Markdown
+
+```{r}
+mydata <- read.csv("bats.csv", sep = ";", skip = 3, header =  T)
+mydata$BRW <- mydata$BRW/1000
+names(mydata)
+```
+
+## Study of the relationship between brain weight and body mass
+
+```{r}
+phyto = mydata[(mydata$Diet==1),]
+ggplot(data = phyto, aes(x = BOW, y = BRW)) + geom_point()
+```
+
+```{r}
+reg1 <- lm(BRW ~ BOW, data = phyto)
+summary(reg1)
+```
+BRW  = 0.6234469 + 0.0089999 * BOW
+BRW = a1 +  a2 * BOW
+
+The estimate of the intercept is 623.4469, the p-value is less than 2e-16 for the slope and equal to 3.14e-08 for the intercept
+H0 hypothesis says that a1 = a2 = 0, We can say the brain weight is linearly dependent of the body mass, the coefficient of determination is 0.95
+
+```{r}
+anova(reg1)
+```
+Additional information : the residuals and statistics  about the impact of BOW on BRW, the sum of residual is 4.4254
+
+
+
+```{r}
+plot(reg1$fitted.values, reg1$residuals, xlab = "Predicted", ylab = "Residuals")
+```
+```{r}
+plot(reg1, 4)
+```
+
+
+```{r}
+which(phyto$BRW>8)
+```
+```{r}
+phytobis = phyto[which(phyto$BRW<8),]
+```
+
+```{r}
+reg2 = lm(BRW ~ BOW, data = phytobis)
+summary(reg2)
+```
+```{r}
+par(mfcol = c(2, 2))
+plot(reg1)
+plot(reg2)
+```
+## Study of the contribution of the total weight of each part of the brain
+```{r}
+phytoNum <- phyto[, c(4:8)]
+mat.cor = cor(phytoNum)
+corrplot(mat.cor, type = "upper")
+```
+```{r}
+cor.test(phyto$BRW, phyto$HIP)
+cor.test(phyto$BRW, phyto$MOB)
+cor.test(phyto$BRW, phyto$AUD)
+
+```
+We can conclude that the BRW is correlated with HIP, MOB and not with AUD
+
+```{r}
+regm = lm(BRW ~ AUD + MOB + HIP, data = phytobis)
+summary(regm)
+```
